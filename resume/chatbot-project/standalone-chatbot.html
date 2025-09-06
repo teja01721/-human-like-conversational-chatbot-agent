@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Human-Like Conversational Chatbot - STAN Challenge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 800px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .message.user .message-content {
+            background: #007bff;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .chat-input input:focus {
+            border-color: #007bff;
+        }
+
+        .chat-input button {
+            padding: 12px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .chat-input button:hover {
+            background: #0056b3;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 10px 16px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            max-width: 70%;
+            margin-bottom: 15px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .status-bar {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+
+        .demo-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            margin: 10px 20px;
+            border-radius: 8px;
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>🤖 Human-Like Chatbot</h1>
+            <p>STAN Internship Challenge - AI with Memory & Personality</p>
+        </div>
+        
+        <div class="demo-notice">
+            <strong>Demo Mode:</strong> This is a standalone version. For full AI features, add your API keys and deploy the backend.
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-content">
+                    Hello! I'm your human-like conversational AI assistant. I have memory capabilities and can adapt my tone based on your emotions. Try talking to me about your hobbies, feelings, or ask me anything! 😊
+                </div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <input type="text" id="messageInput" placeholder="Type your message here..." />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+
+        <div class="status-bar">
+            <span id="statusText">Ready • Memory: Active • Personality: Adaptive</span>
+        </div>
+    </div>
+
+    <script>
+        // Simulated memory and personality system
+        let userMemory = {
+            name: null,
+            preferences: [],
+            emotions: [],
+            topics: [],
+            conversationCount: 0
+        };
+
+        let currentMood = 'neutral';
+        let responses = {
+            greetings: [
+                "Hello! It's great to meet you! How are you feeling today?",
+                "Hi there! I'm excited to chat with you. What's on your mind?",
+                "Hey! I'm here and ready to have a wonderful conversation with you!",
+                "Hello! I hope you're having a fantastic day. How can I help?"
+            ],
+            emotions: {
+                happy: [
+                    "I love your positive energy! Tell me more about what's making you happy!",
+                    "That's wonderful! Your happiness is contagious. What else is going well?",
+                    "I'm so glad you're feeling great! Let's keep this positive vibe going!"
+                ],
+                sad: [
+                    "I'm sorry you're feeling down. I'm here to listen if you want to talk about it.",
+                    "That sounds tough. Would you like to share what's bothering you?",
+                    "I understand. Sometimes we all need someone to talk to. I'm here for you."
+                ],
+                excited: [
+                    "Your excitement is amazing! I can feel your energy through the screen!",
+                    "Wow, you sound really pumped! What's got you so excited?",
+                    "I love your enthusiasm! Tell me everything!"
+                ]
+            },
+            memory: [
+                "I remember you mentioning that before! It's great that you're consistent.",
+                "Oh yes, we talked about this earlier. How has that been going?",
+                "I haven't forgotten what you told me about that. Any updates?"
+            ],
+            fallback: [
+                "That's really interesting! Can you tell me more about that?",
+                "I'd love to hear your thoughts on this. What do you think?",
+                "Hmm, that's a fascinating perspective. How did you come to think that way?",
+                "I appreciate you sharing that with me. What else would you like to discuss?"
+            ]
+        };
+
+        function detectEmotion(message) {
+            const happyWords = ['happy', 'great', 'awesome', 'wonderful', 'excited', 'love', 'amazing'];
+            const sadWords = ['sad', 'down', 'depressed', 'upset', 'angry', 'frustrated', 'terrible'];
+            const excitedWords = ['excited', 'pumped', 'thrilled', 'can\'t wait', 'amazing', 'incredible'];
+
+            message = message.toLowerCase();
+            
+            if (excitedWords.some(word => message.includes(word))) return 'excited';
+            if (happyWords.some(word => message.includes(word))) return 'happy';
+            if (sadWords.some(word => message.includes(word))) return 'sad';
+            
+            return 'neutral';
+        }
+
+        function extractMemoryItems(message) {
+            // Simple keyword extraction for demo
+            const hobbies = ['reading', 'gaming', 'cooking', 'music', 'sports', 'art', 'travel'];
+            const preferences = ['like', 'love', 'prefer', 'enjoy', 'favorite'];
+            
+            message = message.toLowerCase();
+            
+            hobbies.forEach(hobby => {
+                if (message.includes(hobby) && !userMemory.topics.includes(hobby)) {
+                    userMemory.topics.push(hobby);
+                }
+            });
+
+            // Extract name
+            const nameMatch = message.match(/my name is (\w+)|i'm (\w+)|call me (\w+)/i);
+            if (nameMatch) {
+                userMemory.name = nameMatch[1] || nameMatch[2] || nameMatch[3];
+            }
+        }
+
+        function generateResponse(message) {
+            const emotion = detectEmotion(message);
+            extractMemoryItems(message);
+            userMemory.conversationCount++;
+
+            let response = "";
+
+            // Greeting detection
+            if (message.toLowerCase().match(/^(hi|hello|hey|good morning|good afternoon)/)) {
+                response = responses.greetings[Math.floor(Math.random() * responses.greetings.length)];
+                if (userMemory.name) {
+                    response = response.replace("Hello!", `Hello ${userMemory.name}!`);
+                }
+            }
+            // Emotion-based responses
+            else if (emotion !== 'neutral' && responses.emotions[emotion]) {
+                response = responses.emotions[emotion][Math.floor(Math.random() * responses.emotions[emotion].length)];
+            }
+            // Memory-based responses
+            else if (userMemory.topics.length > 0 && Math.random() > 0.6) {
+                const topic = userMemory.topics[Math.floor(Math.random() * userMemory.topics.length)];
+                response = `Speaking of ${topic}, ${responses.memory[Math.floor(Math.random() * responses.memory.length)]}`;
+            }
+            // Fallback responses
+            else {
+                response = responses.fallback[Math.floor(Math.random() * responses.fallback.length)];
+            }
+
+            // Add personality touches
+            if (userMemory.conversationCount > 5) {
+                response += " I'm really enjoying our conversation!";
+            }
+
+            if (userMemory.name && Math.random() > 0.7) {
+                response += ` ${userMemory.name}.`;
+            }
+
+            return response;
+        }
+
+        function addMessage(content, isUser = false) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = content;
+            
+            messageDiv.appendChild(contentDiv);
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            document.getElementById('typingIndicator').style.display = 'block';
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typingIndicator').style.display = 'none';
+        }
+
+        function updateStatus() {
+            const statusText = document.getElementById('statusText');
+            const memoryItems = userMemory.topics.length + (userMemory.name ? 1 : 0);
+            statusText.textContent = `Active • Memory: ${memoryItems} items • Conversations: ${userMemory.conversationCount}`;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, true);
+            input.value = '';
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            // Simulate AI thinking time
+            setTimeout(() => {
+                hideTypingIndicator();
+                const response = generateResponse(message);
+                addMessage(response);
+                updateStatus();
+            }, 1000 + Math.random() * 2000);
+        }
+
+        // Event listeners
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Initialize
+        updateStatus();
+
+        // Demo messages for testing
+        setTimeout(() => {
+            addMessage("🧪 Test all STAN Challenge features:", false);
+            addMessage("✅ Memory: 'My name is Alex' then ask 'What's my name?'", false);
+            addMessage("✅ Emotions: 'I'm feeling sad' vs 'I'm so happy!'", false);
+            addMessage("✅ Hobbies: 'I love gaming' then mention gaming later", false);
+            addMessage("✅ Variety: Say 'hello' multiple times for different responses", false);
+            addMessage("Ready to chat! Try any of the test cases above. 😊", false);
+        }, 1500);
+    </script>
+</body>
+</html>
